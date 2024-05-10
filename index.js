@@ -28,25 +28,48 @@ async function run() {
     await client.connect();
 
     const assignmentCollection = client.db('assignment').collection('assignmentsCreate')
-    app.get('/assignmentsCreate', async (req,res)=>{
+    app.get('/assignmentsCreate', async (req, res) => {
       const cursor = assignmentCollection.find()
       const result = await cursor.toArray()
       res.send(result);
     })
-    
 
-    app.post('/assignmentsCreate', async(req,res)=>{
+    app.get('/assignmentsCreate/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await assignmentCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.put('/assignmentsCreate/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true }
+      const updatedAssignment = req.body
+      const assignment = {
+        $set: {
+          name: updatedAssignment.name,
+          description: updatedAssignment.description,
+          marks: updatedAssignment.marks,
+          img: updatedAssignment.img,
+        }
+      }
+      const result = await assignmentCollection.updateOne(filter, assignment, options)
+      res.send(result)
+    })
+    app.post('/assignmentsCreate', async (req, res) => {
       const newAssignment = req.body
       console.log(newAssignment);
       const result = await assignmentCollection.insertOne(newAssignment)
       res.send(result)
     })
-    app.delete('/assignmentsCreate/:id', async(req,res)=>{
+    app.delete('/assignmentsCreate/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await assignmentCollection.deleteOne(query)
       res.send(result);
     })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -61,10 +84,10 @@ run().catch(console.dir);
 
 
 
-app.get('/', (req,res)=>{
-    res.send('server is running')
+app.get('/', (req, res) => {
+  res.send('server is running')
 })
 
-app.listen(port,()=>{
-    console.log(`server is running on port ${port}`);
+app.listen(port, () => {
+  console.log(`server is running on port ${port}`);
 })
