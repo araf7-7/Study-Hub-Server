@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 
 //middleware
 app.use(cors({
-  origin : [
+  origin: [
     'http://localhost:5173'
   ],
   credentials: true
@@ -38,20 +38,27 @@ async function run() {
     const submitCollection = client.db('assignment').collection('submit')
 
     //auth related api
-    app.post('/jwt', async(req,res)=>{
+    app.post('/jwt', async (req, res) => {
       const user = req.body
-      console.log('user for token',user );
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'1h'})
-      res.cookie('token',token,{
+      console.log('user for token', user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      res.cookie('token', token, {
         httpOnly: true,
         secure: true,
         sameSite: 'none'
       })
-      .send({success : true})
+        .send({ success: true })
     })
-    app.post('/logout', async(req,res)=>{
+    app.post('/logout', async (req, res) => {
       const user = req.body
-      res.clearCookie('token', {maxAge: 0}).send({success:true})
+      res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+    })
+
+
+    //pagination
+    app.get('/assignmentCount', async (req, res) => {
+      const count = await assignmentCollection.find().toArray()
+      res.send({count});
     })
 
     app.get('/assignmentsCreate', async (req, res) => {
@@ -97,7 +104,7 @@ async function run() {
     })
     //submit collection
 
-    app.post('/submit', async(req,res)=>{
+    app.post('/submit', async (req, res) => {
       const submit = req.body;
       console.log(submit);
       const result = await submitCollection.insertOne(submit)
