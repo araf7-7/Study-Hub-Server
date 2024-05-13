@@ -62,7 +62,12 @@ async function run() {
     })
 
     app.get('/assignmentsCreate', async (req, res) => {
-      const cursor = assignmentCollection.find()
+      const {difficulty} = req.query
+      let find = {}
+      if (difficulty){
+        find.option= difficulty
+      }
+      const cursor = assignmentCollection.find(find)
       const result = await cursor.toArray()
       res.send(result);
     })
@@ -102,6 +107,8 @@ async function run() {
       const result = await assignmentCollection.deleteOne(query)
       res.send(result);
     })
+
+
     //submit collection
 
     app.post('/submit', async (req, res) => {
