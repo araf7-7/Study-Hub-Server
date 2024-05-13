@@ -115,12 +115,36 @@ async function run() {
       const result = await cursor.toArray()
       res.send(result);
     })
+    app.get('/pending', async (req, res) => {
+      const cursor = submitCollection.find({status:'Pending'})
+      const result = await cursor.toArray()
+      res.send(result);
+    })
     app.get("/submit/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email }
       const result = await submitCollection.find(query).toArray();
       res.send(result);
     });
+    app.put('/submit/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updatedMarks = req.body;
+        const mark = {
+          $set: {
+           ...updatedMarks
+          }
+        };
+        const result = await submitCollection.updateOne(filter, mark, options);
+        res.status(200).json({ success: true, message: "Updated successfully" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "An error occurred" });
+      }
+    });
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
