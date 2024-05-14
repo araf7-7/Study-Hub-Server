@@ -9,7 +9,9 @@ const port = process.env.PORT || 5000;
 //middleware
 app.use(cors({
   origin: [
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://assignment-11-6ac64.web.app',
+    'assignment-11-6ac64.firebaseapp.com'
   ],
   credentials: true
 }));
@@ -28,11 +30,17 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+const cookieOption = {
 
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none'
+
+}
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const assignmentCollection = client.db('assignment').collection('assignmentsCreate')
     const submitCollection = client.db('assignment').collection('submit')
@@ -42,11 +50,7 @@ async function run() {
       const user = req.body
       console.log('user for token', user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none'
-      })
+      res.cookie('token', token, cookieOption)
         .send({ success: true })
     })
     app.post('/logout', async (req, res) => {
@@ -58,14 +62,14 @@ async function run() {
     //pagination
     app.get('/assignmentCount', async (req, res) => {
       const count = await assignmentCollection.find().toArray()
-      res.send({count});
+      res.send({ count });
     })
 
     app.get('/assignmentsCreate', async (req, res) => {
-      const {difficulty} = req.query
+      const { difficulty } = req.query
       let find = {}
-      if (difficulty){
-        find.option= difficulty
+      if (difficulty) {
+        find.option = difficulty
       }
       const cursor = assignmentCollection.find(find)
       const result = await cursor.toArray()
@@ -123,7 +127,7 @@ async function run() {
       res.send(result);
     })
     app.get('/pending', async (req, res) => {
-      const cursor = submitCollection.find({status:'Pending'})
+      const cursor = submitCollection.find({ status: 'Pending' })
       const result = await cursor.toArray()
       res.send(result);
     })
@@ -141,7 +145,7 @@ async function run() {
         const updatedMarks = req.body;
         const mark = {
           $set: {
-           ...updatedMarks
+            ...updatedMarks
           }
         };
         const result = await submitCollection.updateOne(filter, mark, options);
@@ -151,10 +155,10 @@ async function run() {
         res.status(500).json({ success: false, message: "An error occurred" });
       }
     });
-    
+
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
